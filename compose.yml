@@ -1,0 +1,13 @@
+services:
+  fleetview:
+    image: coolcat/fleetview:latest
+    ports:
+      - "5000:5000"
+    container_name: FleetView
+    environment:
+      - DOCKER_SERVERS=server1.abc.net,server2.abc.net # Add your servers seperated by a comma
+      - SSH_USER=user # Add you SSH User
+      - SSH_KEY_PATH=/root/.ssh/id_rsa # Do not change
+    volumes:
+      - ./ssh/id_ed25519:/root/.ssh/id_rsa:ro # Path to your key location
+      - ./ssh/known_hosts:/root/.ssh/known_hosts:ro # Path to your "known_hosts" 
