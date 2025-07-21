@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FleetView</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #111111;
+      --card: #f1f1f1;
+    }
+
+    .dark {
+      --bg: #1e1e1e;
+      --fg: #ffffff;
+      --card: #2a2a2a;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      padding: 1em;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5em;
+    }
+
+    .toggle {
+      background: none;
+      border: 1px solid var(--fg);
+      padding: 0.4em 1em;
+      color: var(--fg);
+      cursor: pointer;
+    }
+
+    /* New: Filter bar styles */
+    #filter-bar {
+      background: var(--card);
+      padding: 0.5em 1em;
+      display: flex;
+      gap: 1em;
+      align-items: center;
+      font-size: 0.9em;
+      border-bottom: 1px solid #ccc;
+      flex-wrap: wrap;
+    }
+
+    #filter-bar label {
+      cursor: pointer;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1em;
+      padding: 1em;
+    }
+
+    .host {
+      background: var(--card);
+      border-radius: 6px;
+      padding: 1em;
+    }
+
+    .host h2 {
+      margin-top: 0;
+      font-size: 1.1em;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 0.4em;
+    }
+
+.container {
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.container small {
+  color: #ccc;
+  font-weight: normal;
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FleetView</h1>
+    <button class="toggle" onclick="toggleTheme()">Theme</button>
+  </header>
+
+  <!-- New: Filter radio buttons -->
+  <div id="filter-bar">
+    <label><input type="radio" name="status-filter" value="all" checked> All</label>
+    <label><input type="radio" name="status-filter" value="running"> Running</label>
+    <label><input type="radio" name="status-filter" value="exited"> Exited</label>
+    <label><input type="radio" name="status-filter" value="paused"> Paused</label>
+    <label><input type="radio" name="status-filter" value="unreachable"> Unreachable</label>
+  </div>
+
+  <main id="matrix">Loading...</main>
+
+<script>
+  function applyTheme(isDark) {
+    document.body.classList.toggle("dark", isDark);
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+  }
+
+  function toggleTheme() {
+    const currentTheme = localStorage.getItem("theme");
+    const isDark = currentTheme === "dark" ? false : true;
+    applyTheme(isDark);
+  }
+
+  // Save selected filter in variable
+  let selectedFilter = 'all';
+
+  // Update filter when radio button changes
+  document.addEventListener('DOMContentLoaded', () => {
+    const radios = document.querySelectorAll('input[name="status-filter"]');
+    radios.forEach(radio => {
+      radio.addEventListener('change', e => {
+        selectedFilter = e.target.value;
+        fetchData(); // refresh view on filter change
+      });
+    });
+  });
+
+  // Apply saved theme on page load
+  window.addEventListener("DOMContentLoaded", () => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") {
+      applyTheme(true);
+    }
+    fetchData();
+    setInterval(fetchData, 60000); // every 5 minutes
+  });
+
+  async function fetchData() {
+    const res = await fetch("/status");
+    const data = await res.json();
+    const matrix = document.getElementById("matrix");
+    matrix.innerHTML = "";
+
+    const grouped = {};
+    data.forEach(item => {
+      const host = item.Host || "Unknown";
+      if (!grouped[host]) grouped[host] = [];
+      grouped[host].push(item);
+    });
+
+    Object.entries(grouped).forEach(([host, containers]) => {
+      const div = document.createElement("div");
+      div.className = "host";
+      div.innerHTML = `<h2>${host.toUpperCase()}</h2>`;
+
+
+      // Filter containers by selected status:
+      const filteredContainers = containers.filter(c => {
+        let status = (c.State || "").toLowerCase();
+        if (c.Status === "unreachable") status = "unreachable";
+        if (selectedFilter === "all") return true;
+        return status === selectedFilter;
+      });
+
+      if (filteredContainers.length === 0) {
+        div.innerHTML += `<div class="container unreachable">🟠 No containers with status "${selectedFilter}"</div>`;
+      } else {
+        filteredContainers.sort((a, b) => (a.Names || "").localeCompare(b.Names || ""));
+        filteredContainers.forEach(c => {
+          const name = c.Names || "unknown";
+          const state = (c.State || "exited").toLowerCase();
+          const uptime = c.RunningFor || "N/A";
+          const icon = state === "running" ? "🟢" : (state === "exited" ? "🔴" : "🟡");
+          div.innerHTML += `
+            <div class="container ${state}">
+              <span class="status-dot">${icon}</span>${name}<br/>
+              <small>Uptime: ${uptime}</small>
+            </div>`;
+        });
+      }
+
+      matrix.appendChild(div);
+    });
+  }
+
+    fetchData();
+    setInterval(fetchData, 60000); // every 1 minutes
+  </script>
+</body>
+</html>
