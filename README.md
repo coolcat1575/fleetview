@@ -1,4 +1,4 @@
-# fleetview
+# Fleetview
 Visualize container workload distribution between docker (swarm, standalone) nodes
 
 ## Features:
