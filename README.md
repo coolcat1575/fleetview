@@ -1,3 +1,3 @@
 # fleetview
 Visualize container workload distribution between docker (swarm, standalone) nodes
-![Screenshot](./screenshot.png)
+![Screenshot](./Screenshot.png)
