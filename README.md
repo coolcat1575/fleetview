@@ -2,12 +2,14 @@
 Visualize container workload distribution between docker (swarm, standalone) nodes
 
 Features:
-- Show docker containers for each node specified
-- Show uptime
-- Support standalone Docker
-- Support Docker swarm
+- Show what docker containers is running on what node
+- Show status of the Container
+- Show Container uptime
+- Filter on status
+- Supports both standalone Docker (docker compose) and Docker swarm
   
-  
+Screenshot:
+
 ![Screenshot](./Screenshot.png)
 
 ToDo:
