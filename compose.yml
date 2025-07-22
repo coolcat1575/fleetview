@@ -10,4 +10,4 @@ services:
       - SSH_KEY_PATH=/root/.ssh/id_rsa # Do not change
     volumes:
       - ./ssh/id_ed25519:/root/.ssh/id_rsa:ro # Path to your key location
-      - ./ssh/known_hosts:/root/.ssh/known_hosts:ro # Path to your "known_hosts" 
+      - ./ssh/known_hosts:/root/.ssh/known_hosts # Path to your "known_hosts" 
